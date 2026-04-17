@@ -2,7 +2,7 @@ apply plugin: "java"
 
 import org.gradle.api.internal.tasks.testing.*
 tasks.register('custom', CustomTask) {
-  binaryResultsDirectory = file("$buildDir/bin")
+  binaryResultsDirectory = temporaryDir.toPath().resolve("hz").toFile()
   reports.enabledReports.html.outputLocation = file("build")
   reports.enabledReports.junitXml.outputLocation = file("build")
 }
