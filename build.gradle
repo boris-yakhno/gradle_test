@@ -19,7 +19,10 @@ class CustomTestExecuter implements TestExecuter<CustomTestExecutionSpec> {
   void execute(CustomTestExecutionSpec testExecutionSpec, TestResultProcessor testResultProcessor) {
     def time = new TestTime()
     testResultProcessor.started(new DefaultTestSuiteDescriptor("suite", "org.jetbrains"), new TestStartEvent(time.next))
-    testResultProcessor.started(new DefaultTestDescriptor("test", "MyTest", "test"), new TestStartEvent(time.next))
+    testResultProcessor.started(
+      new DefaultTestDescriptor("test", "MyTest", "test"),
+      new TestStartEvent(time.next, "suite")
+    )
     (0..101).forEach{
       def logTime = time.next
       testResultProcessor.output("test", new TestOutputEvent(){
