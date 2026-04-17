@@ -2,13 +2,14 @@ apply plugin: "java"
 
 import org.gradle.api.internal.tasks.testing.*
 tasks.register('custom', CustomTask) {
-  binaryResultsDirectory = temporaryDir.toPath().resolve("hz").toFile()
+  binaryResultsDirectory = file("$buildDir/bin")
   reports.enabledReports.html.outputLocation = file("build")
   reports.enabledReports.junitXml.outputLocation = file("build")
 }
 
 abstract class CustomTask extends AbstractTestTask {
   protected CustomTestExecutionSpec createTestExecutionSpec() { new CustomTestExecutionSpec() }
+
   protected CustomTestExecuter createTestExecuter() { new CustomTestExecuter() }
 }
 
@@ -16,15 +17,36 @@ class CustomTestExecutionSpec implements TestExecutionSpec {}
 
 class CustomTestExecuter implements TestExecuter<CustomTestExecutionSpec> {
   void execute(CustomTestExecutionSpec testExecutionSpec, TestResultProcessor testResultProcessor) {
-    testResultProcessor.started(new DefaultTestSuiteDescriptor("suite", "suite"), new TestStartEvent(100L))
+    def time = new TestTime()
+    testResultProcessor.started(new DefaultTestSuiteDescriptor("suite", "org.jetbrains"), new TestStartEvent(time.next))
+    testResultProcessor.started(new DefaultTestDescriptor("test", "MyTest", "test"), new TestStartEvent(time.next))
+    (0..101).forEach{
+      def logTime = time.next
+      testResultProcessor.output("test", new TestOutputEvent(){
+        long getLogTime() {
+          logTime
+        }
 
-    def name = "testName"
-    testResultProcessor.started(new DefaultTestDescriptor(name, "Foo", "bar"), new TestStartEvent(100L))
-    testResultProcessor.failure(name, TestFailure.fromTestFrameworkFailure(new RuntimeException("custom error", null, true, false)))
-    testResultProcessor.completed(name, new TestCompleteEvent(200L))
+        Destination getDestination() {
+          Destination.StdOut
+        }
 
-    testResultProcessor.completed("suite", new TestCompleteEvent(200L))
+        String getMessage() {
+          "$it\n"
+        }
+      })
+    }
+    testResultProcessor.completed("test", new TestCompleteEvent(time.next))
+    testResultProcessor.completed("suite", new TestCompleteEvent(time.next))
   }
 
   void stopNow() {}
+
+  class TestTime {
+    long time
+
+    long getNext() {
+      time += 100
+    }
+  }
 }
